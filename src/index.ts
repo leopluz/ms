@@ -1,3 +1,6 @@
+import { formatLocaleConvert, parseLocaleConvert } from './locale-convert';
+import type { StringValue, Unit } from './string-value';
+
 // Helpers.
 const s = 1000;
 const m = s * 60;
@@ -6,51 +9,12 @@ const d = h * 24;
 const w = d * 7;
 const y = d * 365.25;
 
-type Unit =
-  | 'Years'
-  | 'Year'
-  | 'Yrs'
-  | 'Yr'
-  | 'Y'
-  | 'Weeks'
-  | 'Week'
-  | 'W'
-  | 'Days'
-  | 'Day'
-  | 'D'
-  | 'Hours'
-  | 'Hour'
-  | 'Hrs'
-  | 'Hr'
-  | 'H'
-  | 'Minutes'
-  | 'Minute'
-  | 'Mins'
-  | 'Min'
-  | 'M'
-  | 'Seconds'
-  | 'Second'
-  | 'Secs'
-  | 'Sec'
-  | 's'
-  | 'Milliseconds'
-  | 'Millisecond'
-  | 'Msecs'
-  | 'Msec'
-  | 'Ms';
-
-type UnitAnyCase = Unit | Uppercase<Unit> | Lowercase<Unit>;
-
-export type StringValue =
-  | `${number}`
-  | `${number}${UnitAnyCase}`
-  | `${number} ${UnitAnyCase}`;
-
 interface Options {
   /**
    * Set to `true` to use verbose formatting. Defaults to `false`.
    */
   long?: boolean;
+  locale?: string;
 }
 
 /**
@@ -65,9 +29,13 @@ function msFn(value: number, options?: Options): string;
 function msFn(value: StringValue | number, options?: Options): number | string {
   try {
     if (typeof value === 'string') {
+      // eslint-disable-next-line no-param-reassign
+      options?.locale && (value = parseLocaleConvert(value, options.locale));
       return parse(value);
     } else if (typeof value === 'number') {
-      return format(value, options);
+      return options?.locale
+        ? formatLocaleConvert(format(value, options), options.locale)
+        : format(value, options);
     }
     throw new Error('Value provided to ms() must be a string or number.');
   } catch (error) {
