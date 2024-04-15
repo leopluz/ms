@@ -1,5 +1,10 @@
-import { formatLocaleConvert, parseLocaleConvert } from './locale-convert';
-import type { StringValue, Unit } from './string-value';
+/* eslint-disable eslint-comments/disable-enable-pair */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable import/no-named-as-default-member */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import i18next from 'i18next';
+import './i18n/config';
 
 // Helpers.
 const s = 1000;
@@ -8,6 +13,46 @@ const h = m * 60;
 const d = h * 24;
 const w = d * 7;
 const y = d * 365.25;
+
+type Unit =
+  | 'Years'
+  | 'Year'
+  | 'Yrs'
+  | 'Yr'
+  | 'Y'
+  | 'Weeks'
+  | 'Week'
+  | 'W'
+  | 'Days'
+  | 'Day'
+  | 'D'
+  | 'Hours'
+  | 'Hour'
+  | 'Hrs'
+  | 'Hr'
+  | 'H'
+  | 'Minutes'
+  | 'Minute'
+  | 'Mins'
+  | 'Min'
+  | 'M'
+  | 'Seconds'
+  | 'Second'
+  | 'Secs'
+  | 'Sec'
+  | 's'
+  | 'Milliseconds'
+  | 'Millisecond'
+  | 'Msecs'
+  | 'Msec'
+  | 'Ms';
+
+type UnitAnyCase = Unit | Uppercase<Unit> | Lowercase<Unit>;
+
+export type StringValue =
+  | `${number}`
+  | `${number}${UnitAnyCase}`
+  | `${number} ${UnitAnyCase}`;
 
 interface Options {
   /**
@@ -27,15 +72,12 @@ interface Options {
 function msFn(value: StringValue, options?: Options): number;
 function msFn(value: number, options?: Options): string;
 function msFn(value: StringValue | number, options?: Options): number | string {
+  processLocaleOption(options);
   try {
     if (typeof value === 'string') {
-      // eslint-disable-next-line no-param-reassign
-      options?.locale && (value = parseLocaleConvert(value, options.locale));
       return parse(value);
     } else if (typeof value === 'number') {
-      return options?.locale
-        ? formatLocaleConvert(format(value, options), options.locale)
-        : format(value, options);
+      return format(value, options);
     }
     throw new Error('Value provided to ms() must be a string or number.');
   } catch (error) {
@@ -59,10 +101,14 @@ export function parse(str: string): number {
       'Value provided to ms.parse() must be a string with length between 1 and 99.',
     );
   }
-  const match =
-    /^(?<value>-?(?:\d+)?\.?\d+) *(?<type>milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
-      str,
-    );
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const unitPattern: string = i18next.t('unitPattern');
+  const regex = new RegExp(
+    `^(?<value>-?(?:\\d+)?\\.?\\d+) *(?<type>${unitPattern})?$`,
+    'i',
+  );
+  const match = regex.exec(str);
   // Named capture groups need to be manually typed today.
   // https://github.com/microsoft/TypeScript/issues/32098
   const groups = match?.groups as { value: string; type?: string } | undefined;
@@ -71,51 +117,41 @@ export function parse(str: string): number {
   }
   const n = parseFloat(groups.value);
   const type = (groups.type || 'ms').toLowerCase() as Lowercase<Unit>;
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'weeks':
-    case 'week':
-    case 'w':
-      return n * w;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      // This should never occur.
-      throw new Error(
-        `The unit ${type as string} was matched, but no matching case exists.`,
-      );
+  if (
+    Object.values(i18next.t('years', { returnObjects: true })).includes(type)
+  ) {
+    return n * y;
+  } else if (
+    Object.values(i18next.t('weeks', { returnObjects: true })).includes(type)
+  ) {
+    return n * w;
+  } else if (
+    Object.values(i18next.t('days', { returnObjects: true })).includes(type)
+  ) {
+    return n * d;
+  } else if (
+    Object.values(i18next.t('hours', { returnObjects: true })).includes(type)
+  ) {
+    return n * h;
+  } else if (
+    Object.values(i18next.t('minutes', { returnObjects: true })).includes(type)
+  ) {
+    return n * m;
+  } else if (
+    Object.values(i18next.t('seconds', { returnObjects: true })).includes(type)
+  ) {
+    return n * s;
+  } else if (
+    Object.values(i18next.t('milliseconds', { returnObjects: true })).includes(
+      type,
+    )
+  ) {
+    return n;
   }
+  // This should never occur.
+  throw new Error(
+    `The unit ${type as string} was matched, but no matching case exists.`,
+  );
 }
 
 /**
@@ -158,16 +194,16 @@ function fmtShort(ms: number): StringValue {
 function fmtLong(ms: number): StringValue {
   const msAbs = Math.abs(ms);
   if (msAbs >= d) {
-    return plural(ms, msAbs, d, 'day');
+    return plural(ms, msAbs, d, i18next.t('day'));
   }
   if (msAbs >= h) {
-    return plural(ms, msAbs, h, 'hour');
+    return plural(ms, msAbs, h, i18next.t('hour'));
   }
   if (msAbs >= m) {
-    return plural(ms, msAbs, m, 'minute');
+    return plural(ms, msAbs, m, i18next.t('minute'));
   }
   if (msAbs >= s) {
-    return plural(ms, msAbs, s, 'second');
+    return plural(ms, msAbs, s, i18next.t('second'));
   }
   return `${ms} ms`;
 }
@@ -207,4 +243,11 @@ function plural(
  */
 function isError(value: unknown): value is Error {
   return typeof value === 'object' && value !== null && 'message' in value;
+}
+
+export function processLocaleOption(options?: Options) {
+  const locale = options?.locale;
+  if (locale === 'pt') {
+    i18next.changeLanguage(locale);
+  }
 }

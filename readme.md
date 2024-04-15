@@ -3,7 +3,11 @@
 ![CI](https://github.com/leopluz/ms/workflows/CI/badge.svg)
 ![Edge Runtime Compatible](https://img.shields.io/badge/edge--runtime-%E2%9C%94%20compatible-black)
 
-Use this package to easily convert various time formats to milliseconds.
+Internationalized Fork from [vercel/ms](https://github.com/vercel/ms) package to easily convert various time formats to milliseconds.
+
+It uses [i18next](https://github.com/i18next/i18next) to make that multilingual.
+
+Function parseStrict() has not localized support yet.
 
 TODO: Add multilanguage support
 
