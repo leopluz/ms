@@ -1,6 +1,6 @@
 # ms-multilanguage
 
-![CI](https://github.com/leopluz/ms/workflows/CI/badge.svg)
+![CI](https://github.com/vercel/ms/workflows/CI/badge.svg)
 ![Edge Runtime Compatible](https://img.shields.io/badge/edge--runtime-%E2%9C%94%20compatible-black)
 
 Internationalized Fork from [vercel/ms](https://github.com/vercel/ms) package to easily convert various time formats to milliseconds.
@@ -9,11 +9,7 @@ It uses [i18next](https://github.com/i18next/i18next) to make that multilingual.
 
 Function parseStrict() has not localized support yet.
 
-TODO: Add multilanguage support
-
 ## Examples
-
-TODO: Add localized examples
 
 <!-- prettier-ignore -->
 ```js
@@ -42,8 +38,6 @@ ms(ms('10 hours'))    // "10h"
 ```
 
 ### Time Format Written-Out
-
-TODO: Add localized examples
 
 <!-- prettier-ignore -->
 ```js
